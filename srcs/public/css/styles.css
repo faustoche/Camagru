@@ -1,4 +1,11 @@
-marquee {
+body {
+	margin: 0;
+	font-family: Tahoma, Arial, sans-serif;
+	background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
+	color:#fff;
+}
+
+my-marquee {
 	color:#ff0;
 	font-weight:bold;
 	background:#000;
@@ -6,4 +13,4 @@ marquee {
 	border-top:2px solid #ff00aa;
 	border-bottom:2px solid #ff00aa;
 	display: block;
-};
+}

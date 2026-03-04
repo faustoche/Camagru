@@ -4,8 +4,8 @@
 
 		<meta charset="UTF-8"/>
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>📸 Camagru 📸</title>
-		<link rel="stylesheet" href="../public/css/styles.css">
+		<title>📸 Camagru</title>
+		<link rel="stylesheet" href="/css/styles.css">
 	</head>
 
 	<body>
@@ -18,7 +18,7 @@
 			<button>Login</button>
 		</div>
 		<div>
-			<marquee scrollamount="10"> Create, post, like and comment</marquee>
+			<my-marquee scrollamount="10"> Create, post, like and comment</my-marquee>
 		</div>
 
 		<div>
