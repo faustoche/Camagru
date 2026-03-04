@@ -1,18 +1,25 @@
-<html>
-	<body>
-		<div>
-			<div>
-				<input type="alias" placeholder="faufaudu49" id="alias-input"/>
+<div class="form-container">
 
-				<input type="email" placeholder="Example555@hotmail.com" id="email-input"/>
-		
-				<input type="password" placeholder="********" id="password-input"/>
-				</div>
-			</div>
-			<div>
-				<button id="register-button">Register</button>
-			</div>
-	</body>
+	<h2 class="section-title">Register</h2>
 
+	<form action="/register" method="POST">
 
-</html>
+		<div class="form-group">
+			<label for="alias-input">Username</label>
+			<input type="text" placeholder="faufaudu49" id="alias-input" name="username" required />
+		</div>
+
+		<div class="form-group">
+			<label for="email-input">Email</label>
+			<input type="email" placeholder="faufaudu49@gmail.com" id="email-input" name="email" required />
+		</div>
+
+		<div class="form-group">
+			<label for="password-input">Password</label>
+			<input type="password" placeholder="*******" id="password-input" name="password" required />
+		</div>
+
+		<button type="submit" id="register-button" class="button full-width">Register</button>
+
+	</form>
+</div>

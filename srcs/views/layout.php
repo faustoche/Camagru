@@ -12,22 +12,20 @@
 		
 		<!-- Header on the page //  -->
 		<!-- //TODO: changer les boutons de register/login -->
-		<div>
-			<header>★ CAMAGRU ★</header>
-			<button>Register</button>
-			<button>Login</button>
-		</div>
-		<div>
-			<my-marquee scrollamount="10"> Create, post, like and comment</my-marquee>
-		</div>
+		<header class="main-header">
+			<div class="logo">★ CAMAGRU ★</div>
 
-		<div>
-			<p>Explore the most recent artworks</p>
-			<div>
-				<!-- //TODO: Ajouter une grid avec les uploads  -->
-			</div>
-			<p>xxx elements per page - 1/10</p>
-		</div>
+			<nav>
+				<button class="button">Login</button>
+				<button class="button">Register</button>
+			</nav>
+		</header>
+
+		<my-marquee scrollamount="10"> Create, post, like and comment</my-marquee>
+
+		<main class="container">
+			<?php echo $content ?? ''; ?>
+		</main>
 
 	</body>
 
