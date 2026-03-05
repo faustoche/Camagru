@@ -10,8 +10,7 @@
 body {
 	margin: 0;
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	background-color: var(--bg-color);
-	background-image: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+	background: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
 	color: var(--text-color);
 	display: flex;
 	flex-direction: column;

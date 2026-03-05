@@ -14,6 +14,8 @@ $router = new Router();
 
 ## Définition de la route 
 $router->get('/', 'HomeController', 'index');
+$router->get('/register', 'RegisterController', 'showForm');
+$router->post('/register', 'RegisterController', 'processRegistration');
 
 ## Lancement du programme/site 
 $router->resolve();

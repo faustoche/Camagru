@@ -8,7 +8,7 @@ class HomeController {
 		ob_start();
 
 		## On charge la vue qu'on veut 
-		require_once __DIR__ . '/../views/register.php';
+		require_once __DIR__ . '/../views/home.php';
 
 		# Récupération du contenu mis en mémoire dans la variable $content
 		## Nettoyage du tampon
