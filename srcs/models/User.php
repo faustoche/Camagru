@@ -73,4 +73,25 @@ class Users {
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':username' => $username, ':email' => $email, ':password' => $password, ':confirmationToken' => $confirmationToken]);
 	}
+
+	public function findUserByEmail(string $email) {
+
+		$request = 'SELECT email FROM users WHERE email = :email';
+		$statement = $this->pdoConnection->prepare($request);
+		$statement->execute([':email' => $email]);
+
+		$result = $statement->fetch();
+		if ($result) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public function saveResetToken(string $email, $token, $expiration) {
+		$request = 'UPDATE users SET reset_token = :token, reset_token_expires_at = :expiration WHERE email = :email';
+
+		$statement = $this->pdoConnection->prepare($request);
+		$statement->execute([':token' => $token, ':email' => $email, ':expiration' => $expiration]);
+	}
 }

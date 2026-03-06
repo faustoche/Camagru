@@ -16,6 +16,7 @@ $router = new Router();
 $router->get('/', 'HomeController', 'index');
 $router->get('/register', 'RegisterController', 'showForm');
 $router->post('/register', 'RegisterController', 'processRegistration');
+$router->post('/forgot-password', 'PasswordController', 'processNewPassword');
 
 ## Lancement du programme/site 
 $router->resolve();
