@@ -113,7 +113,7 @@ class Users {
 		$request = 'UPDATE users SET password = :hashedPassword, reset_token_expires_at = NULL, reset_token = :token';
 
 		$statement = $this->pdoConnection->prepare($request);
-		$statement->execute([':hashedPassword' => $hashedPassword, ':reset_token' => $token]);
+		$statement->execute([':hashedPassword' => $hashedPassword, ':token' => $token]);
 	}
 
 	public function getUserByEmail($email) {
