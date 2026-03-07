@@ -94,4 +94,34 @@ class Users {
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':token' => $token, ':email' => $email, ':expiration' => $expiration]);
 	}
+
+	public function isValidRequestToken($token) {
+		$request = 'SELECT reset_token FROM users WHERE reset_token = :reset_token AND reset_token_expires_at > NOW()';
+
+		$statement = $this->pdoConnection->prepare($request);
+		$statement->execute([':reset_token' => $token]);
+
+		$result = $statement->fetch();
+		if ($result) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public function updatePasswordWithToken($token, $hashedPassword) {
+		$request = 'UPDATE users SET password = :hashedPassword, reset_token_expires_at = NULL, reset_token = :token';
+
+		$statement = $this->pdoConnection->prepare($request);
+		$statement->execute([':hashedPassword' => $hashedPassword, ':reset_token' => $token]);
+	}
+
+	public function getUserByEmail($email) {
+		$request = 'SELECT id, password FROM users WHERE email = :email';
+
+		$statement = $this->pdoConnection->prepare($request);
+		$statement->execute([':email' => $email]);
+
+		return $statement->fetch();
+	}
 }

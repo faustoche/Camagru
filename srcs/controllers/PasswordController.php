@@ -27,4 +27,45 @@ class PasswordController {
 			exit();
 		}
 	}
+
+	public function showResetForm() {
+
+		$user = new Users();
+
+		if (isset($_GET['token'])) {
+			$token = $_GET['token'];
+			
+			if ($user->isValidRequestToken($token)) {
+				ob_start();
+				require_once __DIR__ . '/../views/reset.php';
+				$content = ob_get_clean();
+				require_once __DIR__ . '/../views/layout.php';
+			} else {
+				header('Location: /');
+				exit();
+			}
+		} else {
+			header('Location: /');
+			exit();
+		}
+	}
+
+	public function processReset() {
+
+		$user = new Users();
+
+		if (isset($_POST['password']) && isset($_POST['token'])) {
+			$password = $_POST['password'];
+			$token = $_POST['token'];
+
+			if ($user->isValidRequestToken($token)) {
+				$passwordHashed = password_hash($password, PASSWORD_ARGON2ID);
+				$user->updatePasswordWithToken($token, $passwordHashed);
+				header('Location: /login');
+				exit();
+			}
+		}
+		header('Location: /');
+		exit();
+	}
 }

@@ -1,0 +1,41 @@
+<?php
+
+require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../core/Session.php';
+
+class LoginController {
+
+	public function showLoginForm(array $tab = []) {
+		ob_start();
+		require_once __DIR__ . '/../views/login.php';
+		$content = ob_get_clean();
+		require_once __DIR__ . '/../views/layout.php';
+	}
+
+	public function processLogin() {
+
+		$user = new Users();
+		$errors = [];
+
+		if (isset($_POST['password']) && isset($_POST['email'])) {
+			$password = $_POST['password'];
+			$email = $_POST['email'];
+
+			$userData = $user->getUserByEmail($email);
+
+			if ($userData) {
+				if (password_verify($password, $userData['password'])) {
+					Session::set('user_id', $userData['id']);
+
+					header('Location: /');
+					exit();
+				} else {
+					$errors['invalid-password'] = "Password is invalid";
+				}
+			} else {
+				$errors['invalid-email'] = "Email is invalid";
+			}
+		}
+		$this->showLoginForm($errors);
+	}
+}

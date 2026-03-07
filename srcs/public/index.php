@@ -17,6 +17,10 @@ $router->get('/', 'HomeController', 'index');
 $router->get('/register', 'RegisterController', 'showForm');
 $router->post('/register', 'RegisterController', 'processRegistration');
 $router->post('/forgot-password', 'PasswordController', 'processNewPassword');
+$router->get('/reset', 'PasswordController', 'showResetForm');
+$router->post('/reset', 'PasswordController', 'processReset');
+$router->get('/login', 'LoginController', 'showLoginForm');
+$router->post('/login', 'LoginController', 'processLogin');
 
 ## Lancement du programme/site 
 $router->resolve();

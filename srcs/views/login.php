@@ -1,47 +1,63 @@
-<div class="form-container">
+<div class="form-wrapper">
+	<div class="form-card">
 
-	<h2 class="section-title">Login</h2>
+		<h1>Login</h1>
+		<p class="subtitle">Welcome back.</p>
 
-	<form action="/login" method="GET">
+		<form action="/login" method="POST">
 
-		<div class="form-group">
-			<label for="email-input">Email</label>
+			<div class="form-group">
+				<label for="email-input">Email</label>
+				<?php if (isset($tab['invalid-email'])): ?>
+					<span class="form-error"><?= $tab['invalid-email'] ?></span>
+				<?php endif; ?>
+				<input
+					type="email"
+					id="email-input"
+					name="email"
+					placeholder="you@example.com"
+					value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+					required
+				/>
+			</div>
 
-			<?php
-			if (isset($tab['invalid-email']))
-				echo "<p " . "style='color:red;'>" . $tab['invalid-email'] . "</p>";
-			?>
-			<input type="email" placeholder="faufaudu49@gmail.com" id="email-input" name="email" required />
+			<div class="form-group">
+				<label for="password-input">Password</label>
+				<?php if (isset($tab['invalid-password'])): ?>
+					<span class="form-error"><?= $tab['invalid-password'] ?></span>
+				<?php endif; ?>
+				<input
+					type="password"
+					id="password-input"
+					name="password"
+					placeholder="••••••••"
+					required
+				/>
+			</div>
+
+			<button type="submit" class="btn btn-primary btn-full">Log in</button>
+
+		</form>
+
+		<div class="form-divider">or</div>
+
+		<details style="text-align: center; margin-bottom: 1.5rem;">
+			<summary style="font-size:0.82rem; color:var(--muted); cursor: pointer; list-style: none; outline: none;">
+				Forgot your password?
+			</summary>
+			
+			<form action="/forgot-password" method="POST" style="text-align: left; margin-top: 1rem;">
+				<div class="form-group">
+					<label for="forgot-email">Email address</label>
+					<input type="email" id="forgot-email" name="email" placeholder="you@example.com" required />
+				</div>
+				<button type="submit" class="btn btn-ghost btn-full">Send reset link</button>
+			</form>
+		</details>
+
+		<div class="form-footer">
+			No account yet? <a href="/register">Register</a>
 		</div>
 
-		<div class="form-group">
-			<label for="password-input">Password</label>
-
-			<?php
-			if (isset($tab['invalid-password']))
-				echo "<p " . "style='color:red;'>" . $tab['invalid-password'] . "</p>";	
-			?>
-			<input type="password" placeholder="*******" id="password-input" name="password" required />
-		</div>
-
-		<button type="submit" id="register-button" class="button full-width">Login</button>
-
-	</form>
-
-	<p>Forgot password?</p>
-
-
-	<form action="/forgot" method="POST">
-		<div class="form-group" style="display:none;">
-			<label for="email-input">Email</label>
-
-			<?php
-			if (isset($tab['invalid-email']))
-				echo "<p " . "style='color:red;'>" . $tab['invalid-email'] . "</p>";
-			?>
-			<input type="email" placeholder="faufaudu49@gmail.com" id="email-input" name="email" required />
-		</div>
-
-
-	</form>
+	</div>
 </div>
