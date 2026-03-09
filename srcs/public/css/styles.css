@@ -698,3 +698,14 @@ footer a:hover {
 	background: #c5e1a5;
 	cursor: not-allowed;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   STICKERS
+   ═══════════════════════════════════════════════════════════════ */
+
+.sticker-box {
+	position: absolute;
+	border: white;
+	resize: both;
+	overflow: hidden;
+}

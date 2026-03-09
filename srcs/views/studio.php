@@ -15,6 +15,10 @@
             <form action="/studio/capture" method="POST" enctype="multipart/form-data" id="mainCaptureForm" class="app-sticker-form">
                 
                 <input type="hidden" name="image_data" id="image_data">
+                <input type="hidden" name="pos_x" id="pos_x">
+                <input type="hidden" name="pos_y" id="pos_y">
+                <input type="hidden" name="width" id="width">
+                <input type="hidden" name="height" id="height">
 
                 <div class="app-sticker-grid">
                     <?php if (!empty($stickers)): ?>
@@ -54,11 +58,15 @@
             </div>
 
             <div class="app-canvas-area">
-                <div class="canvas-placeholder">
+                <div class="canvas-placeholder" style="position: relative;">
                     <span class="icon">📷</span>
                     
                     <video id="video" autoplay style="max-width: 100%; border-radius: 8px;"></video>
-                    <canvas id="canvas" style="display:none;"></canvas>
+                    <div id="sticker-box" style="display: none; position: absolute; top: 10px; left: 10px; width: 120px; height: 120px; border: 2px dashed #ff00aa; resize: both; overflow: hidden; cursor: move; z-index: 10;">
+						<img id="live-sticker" src="" alt="Sticker preview" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
+					</div>
+					
+					<canvas id="canvas" style="display:none;"></canvas>
 
                     <small>(Or uploaded image)</small>
                 </div>
@@ -119,6 +127,47 @@
             console.error("Error: cannot access camera: ", error);
             alert("Cannot access camera. Please autorize access in your navigator.");
         });
+
+
+	const stickerBox = document.getElementById('sticker-box');
+	const liveSticker = document.getElementById('live-sticker');
+	const stickerRadios = document.querySelectorAll('input[name="sticker"]');
+
+	stickerRadios.forEach(radio => {
+		radio.addEventListener('change', function() {
+			liveSticker.src = '/stickers/' + this.value;
+			stickerBox.style.display = 'block';
+		});
+	});
+
+	let isDragging = false;
+	let offsetX = 0;
+	let offsetY = 0;
+
+	stickerBox.addEventListener("mousedown", function(e) {
+		// ne pas bloquer le clic si le user est sur le truc de redimensionnement
+		if (e.offsetX > stickerBox.clientWidth - 20 && e.offsetY > stickerBox.clientHeight - 20) {
+			return ;
+		}
+
+		isDragging = true;
+
+		offsetX = e.clientX - stickerBox.offsetLeft;
+		offsetY = e.clientY - stickerBox.offsetTop;
+		stickerBox.style.cursor = 'grabbing';
+	});
+
+	document.addEventListener("mousemove", (e) => {
+		if (isDragging) {
+			stickerBox.style.left = (e.clientX - offsetX) + 'px';
+			stickerBox.style.top = (e.clientY - offsetY) + 'px';
+		}
+	});
+
+	document.addEventListener("mouseup", (e) => {
+		isDragging = false;
+		stickerBox.style.cursor = 'move';
+	});
 
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
