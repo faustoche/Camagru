@@ -15,18 +15,14 @@
             <form action="/studio/capture" method="POST" enctype="multipart/form-data" id="mainCaptureForm" class="app-sticker-form">
                 
                 <input type="hidden" name="image_data" id="image_data">
-                <input type="hidden" name="pos_x" id="pos_x">
-                <input type="hidden" name="pos_y" id="pos_y">
-                <input type="hidden" name="width" id="width">
-                <input type="hidden" name="height" id="height">
+                <input type="hidden" name="stickers_data" id="stickers_data">
 
                 <div class="app-sticker-grid">
                     <?php if (!empty($stickers)): ?>
                         <?php foreach ($stickers as $index => $sticker): ?>
-                            <label class="app-sticker-label">
-                                <input type="radio" name="sticker" value="<?= htmlspecialchars($sticker) ?>" required>
+                            <div class="app-sticker-item" data-sticker="<?= htmlspecialchars($sticker) ?>">
                                 <img src="/stickers/<?= htmlspecialchars($sticker) ?>" alt="Sticker">
-                            </label>
+                            </div>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <p class="app-empty-text">No stickers.</p>
@@ -59,16 +55,10 @@
 
             <div class="app-canvas-area">
                 <div class="canvas-placeholder" style="position: relative;">
-                    <span class="icon">📷</span>
-                    
                     <video id="video" autoplay style="max-width: 100%; border-radius: 8px;"></video>
-                    <div id="sticker-box" style="display: none; position: absolute; top: 10px; left: 10px; width: 120px; height: 120px; border: 2px dashed #ff00aa; resize: both; overflow: hidden; cursor: move; z-index: 10;">
-						<img id="live-sticker" src="" alt="Sticker preview" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
-					</div>
-					
-					<canvas id="canvas" style="display:none;"></canvas>
+                    
+                    <canvas id="canvas" style="display:none;"></canvas>
 
-                    <small>(Or uploaded image)</small>
                 </div>
             </div>
             
@@ -100,12 +90,7 @@
             </div>
 
             <div class="right-panel-actions">
-                <div class="zoom-controls">
-                    <button type="button">🔍+</button>
-                    <button type="button">⛶</button>
-                    <button type="button">🔍-</button>
-                    <span>100%</span>
-                </div>
+                
                 <button type="submit" form="mainCaptureForm" class="app-btn-save">
                     ⬇ Capture
                 </button>
@@ -128,75 +113,139 @@
             alert("Cannot access camera. Please autorize access in your navigator.");
         });
 
+    const canvasPlaceholder = document.querySelector('.canvas-placeholder');
+    const stickerItems = document.querySelectorAll('.app-sticker-item');
 
-	const stickerBox = document.getElementById('sticker-box');
-	const liveSticker = document.getElementById('live-sticker');
-	const stickerRadios = document.querySelectorAll('input[name="sticker"]');
+    stickerItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const stickerFile = this.getAttribute('data-sticker');
+            
+            const newBox = document.createElement('div');
+            newBox.className = 'sticker-box';
+            newBox.style.position = 'absolute';
+            newBox.style.top = '20px';
+            newBox.style.left = '20px';
+            newBox.style.width = '120px';
+            newBox.style.height = '120px';
+            newBox.style.border = '2px dashed #ff00aa';
+            newBox.style.resize = 'both';
+            newBox.style.overflow = 'hidden';
+            newBox.style.cursor = 'move';
+            newBox.style.zIndex = '10';
 
-	stickerRadios.forEach(radio => {
-		radio.addEventListener('change', function() {
-			liveSticker.src = '/stickers/' + this.value;
-			stickerBox.style.display = 'block';
-		});
-	});
+            const newImg = document.createElement('img');
+            newImg.src = '/stickers/' + stickerFile;
+            newImg.style.width = '100%';
+            newImg.style.height = '100%';
+            newImg.style.pointerEvents = 'none';
 
-	let isDragging = false;
-	let offsetX = 0;
-	let offsetY = 0;
+            newImg.onload = function() {
+                const ratio = newImg.naturalHeight / newImg.naturalWidth;
+                newBox.style.width = '120px';
+                newBox.style.height = Math.round(120 * ratio) + 'px';
+            };
 
-	stickerBox.addEventListener("mousedown", function(e) {
-		// ne pas bloquer le clic si le user est sur le truc de redimensionnement
-		if (e.offsetX > stickerBox.clientWidth - 20 && e.offsetY > stickerBox.clientHeight - 20) {
-			return ;
-		}
+            newBox.appendChild(newImg);
+            canvasPlaceholder.appendChild(newBox);
 
-		isDragging = true;
+            let isDragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
 
-		offsetX = e.clientX - stickerBox.offsetLeft;
-		offsetY = e.clientY - stickerBox.offsetTop;
-		stickerBox.style.cursor = 'grabbing';
-	});
+            newBox.addEventListener("mousedown", function(e) {
+                if (e.offsetX > newBox.clientWidth - 20 && e.offsetY > newBox.clientHeight - 20) {
+                    return;
+                }
+                isDragging = true;
+                offsetX = e.clientX - newBox.offsetLeft;
+                offsetY = e.clientY - newBox.offsetTop;
+                newBox.style.cursor = 'grabbing';
+            });
 
-	document.addEventListener("mousemove", (e) => {
-		if (isDragging) {
-			stickerBox.style.left = (e.clientX - offsetX) + 'px';
-			stickerBox.style.top = (e.clientY - offsetY) + 'px';
-		}
-	});
+            document.addEventListener("mousemove", (e) => {
+				if (isDragging) {
+					let newLeft = e.clientX - offsetX;
+					let newTop = e.clientY - offsetY;
 
-	document.addEventListener("mouseup", (e) => {
-		isDragging = false;
-		stickerBox.style.cursor = 'move';
-	});
+					// Calcul des limites maximales par rapport au conteneur de la vidéo
+					const maxLeft = canvasPlaceholder.clientWidth - newBox.offsetWidth;
+					const maxTop = canvasPlaceholder.clientHeight - newBox.offsetHeight;
+
+					// Blocage des coordonnées pour ne pas déborder (0 = bord haut/gauche)
+					if (newLeft < 0) newLeft = 0;
+					if (newTop < 0) newTop = 0;
+					if (newLeft > maxLeft) newLeft = maxLeft;
+					if (newTop > maxTop) newTop = maxTop;
+
+					newBox.style.left = newLeft + 'px';
+					newBox.style.top = newTop + 'px';
+				}
+			});
+
+            document.addEventListener("mouseup", () => {
+                isDragging = false;
+                newBox.style.cursor = 'move';
+            });
+        });
+    });
 
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const captureButton = document.querySelector('.app-btn-save');
     const hiddenInput = document.getElementById('image_data');
-	const form = document.getElementById('mainCaptureForm');
+    const form = document.getElementById('mainCaptureForm');
 
     captureButton.addEventListener('click', function(event) {
-        event.preventDefault(); // Bloque le rechargement de la page
+        event.preventDefault();
 
-        // On donne au canvas la taille exacte de la vidéo
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-
-        // On dessine l'image vidéo sur le canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        hiddenInput.value = canvas.toDataURL('image/png');
 
-        // On convertit le canvas en texte image (Base64)
-        const imageData = canvas.toDataURL('image/png');
+        // Calculs des ratios
+        const videoRect = video.getBoundingClientRect();
+        const widthRatio = video.videoWidth / videoRect.width;
+        const heightRatio = video.videoHeight / videoRect.height;
+        
+        let stickersArray = [];
+        const allStickers = document.querySelectorAll('.sticker-box');
 
-        // On injecte ce texte dans le champ caché
-        hiddenInput.value = imageData;
+        // Analyse de chaque sticker présent sur la vidéo
+        allStickers.forEach(box => {
+            const img = box.querySelector('img');
+            const srcParts = img.src.split('/');
+            const filename = srcParts[srcParts.length - 1];
 
-        console.log("Shot taken : ", imageData.substring(0, 50) + "...");
+            // On prend les mesures EXACTES de la boîte sur l'écran physique
+            const boxRect = box.getBoundingClientRect();
 
-		fetch('/studio/capture', {
-			method: "POST",
-			body: new FormData(form)
-		});
-		
+            // Différence mathématique pure, indépendante du HTML autour
+            const exactDiffX = boxRect.left - videoRect.left;
+            const exactDiffY = boxRect.top - videoRect.top;
+
+            stickersArray.push({
+                src: filename,
+                x: Math.round(exactDiffX * widthRatio),
+                y: Math.round(exactDiffY * heightRatio),
+                width: Math.round(boxRect.width * widthRatio),
+                height: Math.round(boxRect.height * heightRatio)
+            });
+        });
+
+        // Conversion en texte pour le PHP
+        document.getElementById('stickers_data').value = JSON.stringify(stickersArray);
+
+        // Envoi silencieux au serveur
+        fetch('/studio/capture', {
+            method: "POST",
+            body: new FormData(form)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Serveur :", data);
+            allStickers.forEach(box => box.remove());
+        })
+        .catch(error => console.error("Erreur de requête :", error));
     });
 </script>

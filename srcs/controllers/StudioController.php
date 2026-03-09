@@ -8,7 +8,7 @@ class StudioController {
 
 		$stickerDir = scandir(__DIR__ . "/../public/stickers");
 
-		$stickers = array_diff($stickerDir, ['.', '..']);
+		$stickers = array_filter($stickerDir, fn($elem) => str_ends_with($elem, '.png'));
 
 		ob_start();
 		require_once __DIR__ . '/../views/studio.php';
@@ -21,28 +21,63 @@ class StudioController {
 	public function processCapture() {
 		Auth::requireLogin();
 
-		if (isset($_POST['image_data']) && isset($_POST['sticker'])) {
+		// On vérifie le nouveau champ de données (stickers_data)
+		if (isset($_POST['image_data']) && isset($_POST['stickers_data'])) {
 
 			$imageData = $_POST['image_data'];
-			$stickerData = $_POST['sticker'] ?? null;
+			$stickersJson = $_POST['stickers_data'];
 
-			if (empty($imageData) || empty($stickerData)) {
-				echo "error: doesn't exist";
+			if (empty($imageData)) {
+				echo json_encode(['status' => 'error', 'message' => 'Image data is missing']);
 				exit();
 			}
 
+			// Préparation de la toile de fond (webcam)
 			$cleanData = str_replace('data:image/png;base64,', '', $imageData);
 			$result = base64_decode($cleanData);
 			$imageName = uniqid('image') . ".png";
 			$imagePath = __DIR__ . '/../uploads/' . $imageName;
-			$isSaved = file_put_contents($imagePath, $result);
+
+			$baseImage = imagecreatefromstring($result);
+			
+			// Traduction du texte JSON en tableau exploitable par PHP
+			$stickers = json_decode($stickersJson, true);
+
+			// La boucle de montage : on répète l'action pour chaque élément
+			if (is_array($stickers)) {
+				foreach ($stickers as $sticker) {
+					// Par sécurité, on extrait uniquement le nom final du fichier avec basename()
+					$stickerPath = __DIR__ . '/../public/stickers/' . basename($sticker['src']);
+					
+					if (file_exists($stickerPath)) {
+						$stickerImage = imagecreatefrompng($stickerPath);
+						
+						imagecopyresampled(
+							$baseImage, 
+							$stickerImage, 
+							$sticker['x'], $sticker['y'], 
+							0, 0, 
+							$sticker['width'], $sticker['height'], 
+							imagesx($stickerImage), imagesy($stickerImage)
+						);
+						
+						imagedestroy($stickerImage);
+					}
+				}
+			}
+
+			// Sauvegarde finale sur le disque
+			$isSaved = imagepng($baseImage, $imagePath);
+			imagedestroy($baseImage);
+			
+			// Réponse propre au navigateur
+			$response = ['status' => 'success', 'saved' => $isSaved];
+			header('Content-Type: application/json');
+			echo json_encode($response);
+			exit();
 		}
 
-
-		$response = ['status' => 'success', 'saved' => '$isSaved'];
-		header('Content-Type: application/json');
-		echo json_encode($response);
+		echo json_encode(['status' => 'error', 'message' => 'Missing data']);
 		exit();
-
 	}
 }
