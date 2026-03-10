@@ -28,14 +28,14 @@
         <main class="app-center-panel">
             <div class="app-top-toolbar">
                 <div class="toolbar-group">
-                    <button type="button" class="toolbar-tool">📷<span>Webcam</span></button>
+                    <button type="button" class="toolbar-tool" id="button-webcam">📷<span>Webcam</span></button>
                     <label class="toolbar-tool upload-trigger">
                         ⬆<span>Upload</span>
                         <input type="file" name="userfile" accept="image/jpeg,image/png" style="display:none;">
                     </label>
                 </div>
                 <div class="toolbar-group">
-                    <button type="button" class="toolbar-tool disabled">🗑️<span>Remove</span></button>
+                    <button type="button" class="toolbar-tool" id="remove-button">🗑️<span>Remove</span></button>
                 </div>
             </div>
 
@@ -49,8 +49,10 @@
                 </div>
             </div>
             
-            <div class="app-info-banner">
-                ℹ️ You can use your webcam or upload a picture (JPG, PNG).
+            <div style="display: flex; justify-content: center;">
+                <button type="submit" form="mainCaptureForm" class="app-btn-save" disabled>
+                    Take a picture
+                </button>
             </div>
         </main>
 
@@ -72,13 +74,6 @@
                     <?php endif; ?>
                 </div>
             </div>
-
-            <div class="right-panel-actions">
-                
-                <button type="submit" form="mainCaptureForm" class="app-btn-save">
-                    ⬇ Capture
-                </button>
-            </div>
             </form> 
         </aside>
 
@@ -97,6 +92,27 @@
             console.error("Error: cannot access camera: ", error);
             alert("Cannot access camera. Please autorize access in your navigator.");
         });
+    
+    const uploadedImage = document.getElementById('uploaded-image');
+    const webcamButton = document.getElementById('button-webcam');
+    const captureButton = document.querySelector('.app-btn-save');
+
+
+    webcamButton.addEventListener('click', function() {
+        
+        upload.value = '';
+        
+        navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            video.srcObject = stream;
+            uploadedImage.style.display = 'none';
+            video.style.display = 'block';
+        })
+        .catch(function(error) {
+            console.error("Error: cannot access camera: ", error);
+            alert("Cannot access camera. Please autorize access in your navigator.");
+        });
+    })
 
     const upload = document.querySelector('input[name="userfile"]');
 
@@ -105,7 +121,7 @@
             const reader = new FileReader();
             reader.readAsDataURL(this.files[0]);
             reader.onload = () => {
-                const uploadedImage = document.getElementById('uploaded-image');
+                
                 uploadedImage.src = reader.result;
 
                 // pour éviter de garder le bouton de la caméra allumé
@@ -189,12 +205,13 @@
                 isDragging = false;
                 newBox.style.cursor = 'move';
             });
+
+            captureButton.disabled = false;
         });
     });
 
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
-    const captureButton = document.querySelector('.app-btn-save');
     const hiddenInput = document.getElementById('image_data');
     const form = document.getElementById('mainCaptureForm');
 
@@ -216,67 +233,94 @@
             realHeight = activeElem.videoHeight;
         }
 
-        canvas.width = realWidth;
-        canvas.height = realHeight;
-        context.drawImage(activeElem, 0, 0, realWidth, realHeight);
-        hiddenInput.value = canvas.toDataURL('image/png');
+        let timeout = 3;
 
-        // Calculs des ratios
-        const activeRect = activeElem.getBoundingClientRect();
-        const widthRatio = realWidth / activeRect.width;
-        const heightRatio = realHeight / activeRect.height;
-        
-        let stickersArray = [];
-        const allStickers = document.querySelectorAll('.sticker-box');
+        captureButton.innerHTML = timeout;
+        const intervalId = setInterval(function() {
+            timeout--;
+            captureButton.innerHTML = timeout;
+        }, 1000);
 
-        // Analyse de chaque sticker présent sur la vidéo
-        allStickers.forEach(box => {
-            const img = box.querySelector('img');
-            const srcParts = img.src.split('/');
-            const filename = srcParts[srcParts.length - 1];
-
-            // On prend les mesures EXACTES de la boîte sur l'écran physique
-            const boxRect = box.getBoundingClientRect();
-
-            // Différence mathématique pure, indépendante du HTML autour
-            const exactDiffX = boxRect.left - activeRect.left;
-            const exactDiffY = boxRect.top - activeRect.top;
-
-            stickersArray.push({
-                src: filename,
-                x: Math.round(exactDiffX * widthRatio),
-                y: Math.round(exactDiffY * heightRatio),
-                width: Math.round(boxRect.width * widthRatio),
-                height: Math.round(boxRect.height * heightRatio)
-            });
-        });
-
-        // Conversion en texte pour le PHP
-        document.getElementById('stickers_data').value = JSON.stringify(stickersArray);
-
-        const gallery = document.querySelector('.app-shots-grid');
-        const empty_dropzone = document.querySelector('.empty-dropzone');
-        // Envoi silencieux au serveur
-        fetch('/studio/capture', {
-            method: "POST",
-            body: new FormData(form)
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Serveur :", data);
-            allStickers.forEach(box => box.remove());
+        setTimeout(() => {
+            clearInterval(intervalId);
+            captureButton.innerHTML = "Take a picture!";
+            canvas.width = realWidth;
+            canvas.height = realHeight;
+            context.drawImage(activeElem, 0, 0, realWidth, realHeight);
+            hiddenInput.value = canvas.toDataURL('image/png');
+    
+            // Calculs des ratios
+            const activeRect = activeElem.getBoundingClientRect();
+            const widthRatio = realWidth / activeRect.width;
+            const heightRatio = realHeight / activeRect.height;
             
-            const newDiv = document.createElement("div");
-            const img = document.createElement("img");
+            let stickersArray = [];
+            const allStickers = document.querySelectorAll('.sticker-box');
+    
+            // Analyse de chaque sticker présent sur la vidéo
+            allStickers.forEach(box => {
+                const img = box.querySelector('img');
+                const srcParts = img.src.split('/');
+                const filename = srcParts[srcParts.length - 1];
+    
+                // On prend les mesures EXACTES de la boîte sur l'écran physique
+                const boxRect = box.getBoundingClientRect();
+    
+                // Différence mathématique pure, indépendante du HTML autour
+                const exactDiffX = boxRect.left - activeRect.left;
+                const exactDiffY = boxRect.top - activeRect.top;
+    
+                stickersArray.push({
+                    src: filename,
+                    x: Math.round(exactDiffX * widthRatio),
+                    y: Math.round(exactDiffY * heightRatio),
+                    width: Math.round(boxRect.width * widthRatio),
+                    height: Math.round(boxRect.height * heightRatio)
+                });
+            });
+    
+            // Conversion en texte pour le PHP
+            document.getElementById('stickers_data').value = JSON.stringify(stickersArray);
+    
+            const gallery = document.querySelector('.app-shots-grid');
+            const empty_dropzone = document.querySelector('.empty-dropzone');
+            
 
-            img.src = "/uploads/" + data.fileName;
-            newDiv.appendChild(img);
-            newDiv.className = "app-shot-item";
+            // Envoi silencieux au serveur
+            fetch('/studio/capture', {
+                method: "POST",
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Serveur :", data);
+                allStickers.forEach(box => box.remove());
+                captureButton.disabled = true;
+                
+                const newDiv = document.createElement("div");
+                const img = document.createElement("img");
+    
+                img.src = "/uploads/" + data.fileName;
+                newDiv.appendChild(img);
+                newDiv.className = "app-shot-item";
+    
+                if (empty_dropzone)
+                    empty_dropzone.remove();
+                gallery.prepend(newDiv);
+            })
+            .catch(error => console.error("Request error :", error));
+            
+        }, 3000);
 
-            if (empty_dropzone)
-                empty_dropzone.remove();
-            gallery.prepend(newDiv);
-        })
-        .catch(error => console.error("Erreur de requête :", error));
+
+        
     });
+
+    const remove_stickers = document.getElementById('remove-button');
+
+        remove_stickers.addEventListener('click', function() {
+            const allStickers = document.querySelectorAll('.sticker-box');
+            allStickers.forEach(box => box.remove());
+            captureButton.disabled = true;
+        });
 </script>

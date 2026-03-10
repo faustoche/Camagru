@@ -696,8 +696,8 @@ footer a:hover {
 }
 
 .app-btn-save {
-	background: #7cb342;
-	color: white;
+	background: #ffffff;
+	color: #ff0095;
 	border: none;
 	padding: 1rem;
 	border-radius: 8px;
@@ -712,12 +712,13 @@ footer a:hover {
 }
 
 .app-btn-save:not(:disabled):hover {
-	background: #689f38;
+	background: #ff0095;
+	color: white;
 	transform: translateY(-2px);
 }
 
 .app-btn-save:disabled {
-	background: #c5e1a5;
+	background: #ff8ace;
 	cursor: not-allowed;
 }
 
