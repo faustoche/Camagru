@@ -57,7 +57,7 @@
 					Posted by user145341 on January 16th 2026
 				</div>
 
-				<div id="no-comments-msg" style="margin: auto; text-align: center; color: #8e8e8e; font-size: 0.95rem;">
+				<div id="no-comments-msg" style="margin: auto; text-align: center; color: #8e8e8e; fon	t-size: 0.95rem;">
 					<span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">💬</span>
 					No comments yet. Be the first one to add a comment!
 				</div>
