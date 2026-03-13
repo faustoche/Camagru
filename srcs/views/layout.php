@@ -15,6 +15,7 @@
 			<?php
 			$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 			if (isset($_SESSION['user_id'])): ?>
+				<a href="/profile" class="btn btn-ghost">Profile</a>
 				<a href="/studio" class="btn btn-ghost">Studio</a>
 				<a href="/logout" class="btn btn-primary">Log out</a>
 			<?php elseif ($currentPath === '/login'): ?>

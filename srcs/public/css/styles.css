@@ -56,7 +56,7 @@ header.main-header {
 }
 
 .logo span {
-	color: var(--pink);
+	color: #B0DB43;
 }
 
 nav {
@@ -105,13 +105,13 @@ button, .btn {
 }
 
 .btn-primary {
-	background-color: var(--pink);
+	background-color: #DB2763;
 	color: #fff;
 }
 
 .btn-primary:hover {
 	background-color: var(--pink-dim);
-	box-shadow: 0 0 14px rgba(255, 0, 170, 0.25);
+	box-shadow: 0 0 14px #FF00AA;
 	transform: translateY(-1px);
 }
 
@@ -123,7 +123,7 @@ button, .btn {
 
 .btn-ghost:hover {
 	border-color: var(--text);
-	background-color: rgba(0,0,0,0.03);
+	background-color: #B0DB43;
 }
 
 .btn-full {
@@ -370,7 +370,6 @@ footer a:hover {
 	align-items: center;
 	padding: 2rem;
 	min-height: calc(100vh - 120px);
-	background-color: var(--bg);
 }
 
 .studio-app-window {

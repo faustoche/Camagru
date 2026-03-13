@@ -233,7 +233,7 @@
 			.then (data => {
 				if (data.status === 'success') {
 	
-					galleryModal.close();
+					buttonBackModal.click();
 					const imageToTrash = document.querySelector('.shot-thumbnail[data-filename="' + currentEditingImage + '"]');
                     if (imageToTrash) {
                         imageToTrash.closest('.app-shot-item').remove();

@@ -31,6 +31,10 @@ $router->post('/home/details', 'HomeController', 'getImageDetails');
 $router->post('/home/toggle-like', 'HomeController', 'toggleLike');
 $router->post('/home/add-comment', 'HomeController', 'addComment');
 
+$router->get('/profile', 'ProfileController', 'showProfile');
+$router->post('/profile', 'ProfileController', 'updateProfile');
+
+
 
 ## Lancement du programme/site 
 $router->resolve();

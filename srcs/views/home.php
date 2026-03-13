@@ -57,7 +57,7 @@
 					Posted by user145341 on January 16th 2026
 				</div>
 
-				<div id="no-comments-msg" style="margin: auto; text-align: center; color: #8e8e8e; fon	t-size: 0.95rem;">
+				<div id="no-comments-msg" style="margin: auto; text-align: center; color: #8e8e8e; font-size: 0.95rem;">
 					<span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">💬</span>
 					No comments yet. Be the first one to add a comment!
 				</div>
@@ -65,7 +65,7 @@
 			</div>
 
 			<div style="padding: 15px; border-top: 1px solid #efefef; display: flex; align-items: center; gap: 10px;">
-				<img id="btn-like" src="/assets/heart.png" style="width: 28px; cursor: pointer;" alt="Like">
+				<img id="btn-like" src="/assets/heart.png" style="width: 28px; <?= isset($_SESSION['user_id']) ? 'cursor: pointer;' : 'cursor: default;' ?>" alt="Like">
 				<p id="like-count-text" style="margin: 0; font-weight: 600; color: #262626;">0 likes</p>
 			</div>
 
@@ -90,7 +90,7 @@
 	function loadSocialData(filename) {
 		if (!filename) return;
 
-		fetch('home/details', {
+		fetch('/home/details', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ filename: filename })
@@ -130,6 +130,11 @@
 	document.getElementById('btn-like').addEventListener('click', function() {
 		if (!currentEditingImage) return;
 
+		if (!document.getElementById('btn-send-comment')) {
+			alert("Please log in to like this photo");
+			return ;
+		}
+
 		const isLiked = this.src.includes('heart_full');
 		let countElem = document.getElementById('like-count-text');
 		let currentCount = parseInt(countElem.textContent);
@@ -154,7 +159,7 @@
 	});
 
 	const btnSend = document.getElementById('btn-send-comment');
-		if (btnSend) { // On vérifie qu'il existe (car un visiteur non connecté ne l'a pas)
+		if (btnSend) {
 			btnSend.addEventListener('click', function() {
 				const input = document.getElementById('comment-input');
 				const text = input.value.trim();
@@ -194,6 +199,7 @@
 
 			// Bascule visuelle
 			galleryModal.showModal();
+			loadSocialData(currentEditingImage);
 		});
 	});
 
@@ -221,6 +227,7 @@
 			const detailLargeImage = document.getElementById('detail-large-image');
 			detailLargeImage.src = target.src;
 			currentEditingImage = target.getAttribute('data-filename');
+			loadSocialData(currentEditingImage);
 		}
 
 	});
@@ -230,11 +237,12 @@
 		const thumbnail = document.querySelectorAll('.home-thumbnail');
 		const index = Array.from(thumbnail).findIndex(image => image.getAttribute('data-filename') == currentEditingImage);
 
-		if (index >= 0) {
+		if (index >= 0 && index < thumbnail.length - 1) {
 			const target = thumbnail[index + 1];
 			const detailLargeImage = document.getElementById('detail-large-image');
 			detailLargeImage.src = target.src;
 			currentEditingImage = target.getAttribute('data-filename');
+			loadSocialData(currentEditingImage);
 		}
 	});
 
@@ -247,6 +255,14 @@
 				buttonBackModal.click();
 			} else if (event.key === 'ArrowRight') {
 				buttonNextModal.click();
+			}
+		}
+	})
+
+	document.addEventListener('keydown', function(event) {
+		if (galleryModal.open) {
+			if (event.key === 'Enter') {
+				btnSend.click();
 			}
 		}
 	})

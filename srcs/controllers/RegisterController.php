@@ -78,7 +78,7 @@ class RegisterController {
 
 			mail($email, $emailSubject, $emailMessage);
 
-			header('Location: /');
+			header('Location: /login');
 			exit();
 		}
 	}
