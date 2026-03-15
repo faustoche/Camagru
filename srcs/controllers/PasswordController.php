@@ -6,6 +6,10 @@ class PasswordController {
 	
 	public function processNewPassword() {
 		Auth::requireGuest();
+
+		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			die("Erreur de sécurité CSRF : requête invalide.");
+		}
 		$email = trim($_POST['email']);
 
 		$user = new Users();
@@ -56,12 +60,19 @@ class PasswordController {
 	public function processReset() {
 		
 		Auth::requireGuest();
+		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			die("Erreur de sécurité CSRF : requête invalide.");
+		}
 		$user = new Users();
 
 		if (isset($_POST['password']) && isset($_POST['token'])) {
 			$password = $_POST['password'];
 			$token = $_POST['token'];
 
+			if (!preg_match('/^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$/', $password)) {
+				die("Password doesn't match password requirement");
+			}
+			
 			if ($user->isValidRequestToken($token)) {
 				$passwordHashed = password_hash($password, PASSWORD_ARGON2ID);
 				$user->updatePasswordWithToken($token, $passwordHashed);

@@ -16,6 +16,10 @@ class LoginController {
 	public function processLogin() {
 
 		Auth::requireGuest();
+
+		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			die("Erreur de sécurité CSRF : requête invalide.");
+		}
 		$user = new Users();
 		$errors = [];
 
@@ -26,9 +30,10 @@ class LoginController {
 			$userData = $user->getUserByEmail($email);
 
 			if ($userData) {
-				if (password_verify($password, $userData['password'])) {
+				if (!$userData['confirmed']) {
+					$errors['not-confirmed'] = "Please confirm your email before logging in.";
+				} elseif (password_verify($password, $userData['password'])) {
 					Session::set('user_id', $userData['id']);
-
 					header('Location: /');
 					exit();
 				} else {

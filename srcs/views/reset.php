@@ -5,6 +5,7 @@
 		<p class="subtitle">Choose a new password for your account.</p>
 
 		<form action="/reset" method="POST">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 
 			<input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token'] ?? '') ?>">
 

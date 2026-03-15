@@ -26,6 +26,9 @@ class RegisterController {
 	public function processRegistration() {
 
 		Auth::requireGuest();
+		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			die("Erreur de sécurité CSRF : requête invalide.");
+		}
 
 		$errors = [];
 
@@ -57,7 +60,7 @@ class RegisterController {
 		## Vérification que le mdp fait 8 characters
 		if (!empty($_POST['password'])) {
 			$password = checkInput($_POST['password']);
-			if (preg_match('/[^A-Za-z0-9]+/', $password) || strlen($password) < 8)
+			if (!preg_match('/^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$/', $password))
 				$errors['invalid-password'] = "Invalid password";
 		} else {
 			$errors['password-required'] = "Password is required";
@@ -81,6 +84,30 @@ class RegisterController {
 			header('Location: /login');
 			exit();
 		}
+	}
+
+	public function confirmAccount() {
+		if (!isset($_GET['token'])) {
+			header('Location: /');
+			exit();
+		}
+
+		$token = $_GET['token'];
+		$user = new Users();
+		$db = $user->getConnection();
+
+		$request = $db->prepare("SELECT id FROM users WHERE confirmation_token = :token AND confirmed = FALSE");
+		$request->execute([':token' => $token]);
+		$result = $request->fetch();
+
+		if ($result) {
+			$update = $db->prepare("UPDATE users SET confirmed = TRUE, confirmation_token = NULL WHERE confirmation_token = :token");
+			$update->execute([':token' => $token]);
+			header('Location: /login');
+		} else {
+			header('Location: /');
+		}
+		exit();
 	}
 }
 

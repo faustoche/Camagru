@@ -5,6 +5,7 @@
 		<p class="subtitle">Create your account and start sharing.</p>
 
 		<form action="/register" method="POST">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 
 			<div class="form-group">
 				<label for="alias-input">Username</label>

@@ -29,38 +29,60 @@ class ProfileController {
 
 	public function updateProfile() {
 		Auth::requireLogin();
+		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			die("Erreur de sécurité CSRF : requête invalide.");
+		}
 		$user = new Users();
 
-        $user_id = $_SESSION['user_id'];
+		$user_id = $_SESSION['user_id'];
 
-        if (isset($_POST['username'])) {
-            $username = checkInput($_POST['username']);
-            $email = checkInput($_POST['email']);
-            $email_notifications = isset($_POST['notification']) ? 1 : 0;
+		if (isset($_POST['username'])) {
+			$username = checkInput($_POST['username']);
+			$email = checkInput($_POST['email']);
+			$email_notifications = isset($_POST['notification']) ? 1 : 0;
 
-            $request = "UPDATE users SET username = :username, email = :email, email_notifications = :email_notifications WHERE id = :user_id";
-            $statement = $user->getConnection()->prepare($request);
-            $statement->execute([
-                ':username' => $username,
-                ':email' => $email,
-                ':email_notifications' => $email_notifications,
-                ':user_id' => $user_id
-            ]);
-        }
-        
-        elseif (isset($_POST['password']) && !empty($_POST['password'])) {
-            $passwordHashed = password_hash($_POST['password'], PASSWORD_ARGON2ID);
-            
-            $request = "UPDATE users SET password = :password WHERE id = :user_id";
-            $statement = $user->getConnection()->prepare($request);
-            $statement->execute([
-                ':password' => $passwordHashed,
-                ':user_id' => $user_id
-            ]);
-        }
 
-        header('Location: /profile');
-        exit();
+			if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+				header('Location: /profile?error=invalid_email');
+				exit();
+			}
+
+			$stmt = $user->getConnection()->prepare("SELECT id FROM users WHERE email = :email AND id != :user_id");
+			$stmt->execute([':email' => $email, ':user_id' => $user_id]);
+			if ($stmt->fetch()) {
+				header('Location: /profile?error=email_taken');
+				exit();
+			}
+
+			$request = "UPDATE users SET username = :username, email = :email, email_notifications = :email_notifications WHERE id = :user_id";
+			$statement = $user->getConnection()->prepare($request);
+			$statement->execute([
+				':username' => $username,
+				':email' => $email,
+				':email_notifications' => $email_notifications,
+				':user_id' => $user_id
+			]);
+		}
+		elseif (isset($_POST['password']) && !empty($_POST['password'])) {
+			$password = checkInput($_POST['password']);
+			
+			if (!preg_match('/^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$/', $password)) {
+				header('Location: /profile?error=weak_password');
+				exit();
+			}
+
+			$passwordHashed = password_hash($password, PASSWORD_ARGON2ID);
+			
+			$request = "UPDATE users SET password = :password WHERE id = :user_id";
+			$statement = $user->getConnection()->prepare($request);
+			$statement->execute([
+				':password' => $passwordHashed,
+				':user_id' => $user_id
+			]);
+		}
+
+		header('Location: /profile');
+		exit();
 	}
 }
 

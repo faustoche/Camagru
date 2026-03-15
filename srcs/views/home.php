@@ -1,4 +1,5 @@
 <main class="container">
+	<input type="hidden" id="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 
 	<p class="section-title">Latest artworks</p>
 
@@ -24,10 +25,16 @@
 
 	</div>
 
-	<?php if (!empty($images)): ?>
+	<?php if ($totalPages > 1): ?>
 		<p class="pagination">
-			Page <?= (int)($currentPage ?? 1) ?> / <?= (int)($totalPages ?? 1) ?>
-			&nbsp;·&nbsp; <?= (int)($totalImages ?? 0) ?> photos
+			<?php if ($currentPage > 1): ?>
+				<a href="/?page=<?= $currentPage - 1 ?>">← Prev</a> &nbsp;
+			<?php endif; ?>
+			Page <?= $currentPage ?> / <?= $totalPages ?>
+			&nbsp;·&nbsp; <?= $totalImages ?> photos
+			<?php if ($currentPage < $totalPages): ?>
+				&nbsp; <a href="/?page=<?= $currentPage + 1 ?>">Next →</a>
+			<?php endif; ?>
 		</p>
 	<?php endif; ?>
 
@@ -48,7 +55,9 @@
 
 		<div style="width: 350px; min-width: 350px; display: flex; flex-direction: column; background: #fff; border-left: 1px solid #efefef;">
 			
-			<div style="padding: 15px; border-bottom: 1px solid #efefef; text-align: right;">
+			<div style="padding: 15px; border-bottom: 1px solid #efefef; display: flex; justify-content: space-between; align-items: center;">
+				<div id="modal-header-info" style="font-size: 0.85rem; color: #8e8e8e;">
+					</div>
 				<button type="button" id="button-close-modal" style="background: none; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: #262626;">✕</button>
 			</div>
 
@@ -97,6 +106,11 @@
 		})
 		.then(response => response.json())
 		.then(data => {
+			const headerInfo = document.getElementById('modal-header-info');
+			const dateObj = new Date(data.date);
+			const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+			headerInfo.innerHTML = `<span style="color: #FF1493;">Posted by <b>${data.author}</b> on ${formattedDate}</span>`;
+
 			document.getElementById('like-count-text').textContent = data.likes + ' likes';
 
 			const heartButton = document.getElementById('btn-like');
@@ -113,14 +127,17 @@
 				container.innerHTML = `
 				<div id="no-comments-msg" style="margin: auto; text-align: center; color: #8e8e8e; font-size: 0.95rem;">
 					<span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">💬</span>
-					No comments yet.<br>Start the conversation.
+					No comments yet. Be the first one to add a comment!
 				</div>`;
 			} else {
 				data.comments.forEach(comment => {
 					const div = document.createElement('div');
-					div.style.marginBottom = '12px';
+					div.style.marginBottom = '15px';
 					div.style.fontSize = '0.95rem';
-					div.innerHTML = `<b>${comment.username}</b> ${comment.content}`;
+					div.style.lineHeight = '1.4';
+					
+					div.innerHTML = `<span style="color: #0095f6; font-weight: 600; margin-right: 8px;">${comment.username}</span><span style="color: #262626; word-break: break-word;">${comment.content}</span>`;
+					
 					container.appendChild(div);
 				});
 			}
@@ -154,7 +171,10 @@
 		fetch('/home/toggle-like', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ filename: currentEditingImage })
+			body: JSON.stringify({ 
+				filename: currentEditingImage,
+				csrf_token: document.getElementById('csrf_token').value // LIGNE À AJOUTER
+			})
 		});
 	});
 
@@ -169,7 +189,11 @@
 				fetch('/home/add-comment', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ filename: currentEditingImage, content: text })
+					body: JSON.stringify({ 
+						filename: currentEditingImage, 
+						content: text,
+						csrf_token: document.getElementById('csrf_token').value // LIGNE À AJOUTER
+					})
 				})
 				.then(response => response.json())
 				.then(data => {
@@ -209,6 +233,12 @@
 
 	buttonClose.addEventListener('click', function() {
 		galleryModal.close(); // On ferme le <dialog>
+	});
+
+	galleryModal.addEventListener('click', function(event) {
+		if (event.target === galleryModal) {
+			galleryModal.close();
+		}
 	});
 
 

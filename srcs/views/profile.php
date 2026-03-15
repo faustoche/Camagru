@@ -4,6 +4,7 @@
 		<h1 style="text-align: center; padding-bottom: 20px;">My profile</h1>
 
 		<form action="/profile" method="POST">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 
 			<div class="form-group">
 				<label for="username-input">Username</label>
@@ -36,12 +37,14 @@
 				id="email-notification"
 				name="notification"
 				value="1"
-				<?= ($fetchData['email-notification'] ?? 0) === 1 ? 'checked' : '' ?> disabled />
+				<?= (isset($fetchData['email_notifications']) && $fetchData['email_notifications'] == 0) ? '' : 'checked' ?> disabled />
 			</div>
 
 			<button type="button" id="button-update">UPDATE MY INFORMATIONS</button>
 
 		</form>
+
+		<div class="form-divider"></div>
 		<form action="/profile" method="POST">
 
 			<div class="form-group">

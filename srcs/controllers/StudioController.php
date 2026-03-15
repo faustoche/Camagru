@@ -32,6 +32,10 @@ class StudioController {
 	public function processCapture() {
 
 		Auth::requireLogin();
+		if (!isset($_POST['csrf_token']) || !Session::validateCsrfToken($_POST['csrf_token'])) {
+			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
+			exit();
+		}
 
 		// On vérifie le nouveau champ de données (stickers_data)
 		if (isset($_POST['image_data']) && isset($_POST['stickers_data'])) {
@@ -51,6 +55,11 @@ class StudioController {
 			$imagePath = __DIR__ . '/../public/uploads/' . $imageName;
 
 			$baseImage = imagecreatefromstring($result);
+			if ($baseImage === false) {
+				header('Content-Type: application/json');
+				echo json_encode(['status' => 'error', 'message' => 'Invalid image format.']);
+				exit();
+			}
 			
 			// Traduction du texte JSON en tableau exploitable par PHP
 			$stickers = json_decode($stickersJson, true);
@@ -110,6 +119,11 @@ class StudioController {
 
 		// Lecture du json entrant
 		$input = json_decode(file_get_contents('php://input'), true);
+
+		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
+			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
+			exit();
+		}
 		$filename = $input['filename'];
 		if (empty($filename)) {
 			exit();
@@ -145,6 +159,10 @@ class StudioController {
 		$user = new Users();
 		// Lecture du json entrant
 		$input = json_decode(file_get_contents('php://input'), true);
+		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
+			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
+			exit();
+		}
 		$filename = $input['filename'];
 		if (empty($filename)) {
 			exit();

@@ -22,6 +22,9 @@ $router->post('/reset', 'PasswordController', 'processReset');
 $router->get('/login', 'LoginController', 'showLoginForm');
 $router->post('/login', 'LoginController', 'processLogin');
 $router->get('/logout', 'LogoutController', 'processLogout');
+
+$router->get('/confirm', 'RegisterController', 'confirmAccount');
+
 $router->get('/studio', 'StudioController', 'showStudio');
 $router->post('/studio/capture', 'StudioController', 'processCapture');
 $router->post('/studio/delete', 'StudioController', 'deleteCapture');
@@ -33,7 +36,6 @@ $router->post('/home/add-comment', 'HomeController', 'addComment');
 
 $router->get('/profile', 'ProfileController', 'showProfile');
 $router->post('/profile', 'ProfileController', 'updateProfile');
-
 
 
 ## Lancement du programme/site 

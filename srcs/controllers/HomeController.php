@@ -7,24 +7,30 @@ class HomeController {
 
 		$user = new Users();
 
+		$perPage = 5;
+		$currentPage = max(1, (int)($_GET['page'] ?? 1));
+		$offset = ($currentPage - 1) * $perPage;
+
+		// Compte total
+		$countStmt = $user->getConnection()->query("SELECT COUNT(*) FROM images WHERE is_published = TRUE");
+		$totalImages = (int)$countStmt->fetchColumn();
+		$totalPages = max(1, (int)ceil($totalImages / $perPage));
+
 		$request = "SELECT images.id, images.filename, users.username, COUNT(likes.user_id) AS likes 
 					FROM images 
 					INNER JOIN users ON images.user_id = users.id 
 					LEFT JOIN likes ON images.id = likes.image_id 
 					WHERE images.is_published = TRUE 
 					GROUP BY images.id 
-					ORDER BY images.created_at DESC";
+					ORDER BY images.created_at DESC
+					LIMIT :limit OFFSET :offset";
 
 		$statement = $user->getConnection()->prepare($request);
+		$statement->bindValue(':limit', $perPage, PDO::PARAM_INT);
+		$statement->bindValue(':offset', $offset, PDO::PARAM_INT);
 		$statement->execute();
-
 		$images = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-		$currentPage = 1;
-		$totalPages = 1;
-		$totalImages = count($images);
-
-		
 		## Démarrage de la temporisation de sortie 
 		## Mise en pause de l'affichage
 		ob_start();
@@ -49,11 +55,13 @@ class HomeController {
 		$db = $user->getConnection();
 
 		// 1. Trouver l'ID de l'image
-		$req = $db->prepare("SELECT id FROM images WHERE filename = :filename");
+		$req = $db->prepare("SELECT images.id, images.created_at, users.username AS author FROM images INNER JOIN users ON images.user_id = users.id WHERE images.filename = :filename");
 		$req->execute([':filename' => $filename]);
 		$imageData = $req->fetch(PDO::FETCH_ASSOC);
 		if (!$imageData) exit();
 		$imageId = $imageData['id'];
+		$author = $imageData['author'];
+		$date = $imageData['created_at'];
 
 		// 2. Compter les likes
 		$reqLike = $db->prepare("SELECT COUNT(*) AS total FROM likes WHERE image_id = :image_id");
@@ -79,7 +87,9 @@ class HomeController {
 		echo json_encode([
 			'likes' => $likes, 
 			'comments' => $comments,
-			'user_liked' => $userLiked
+			'user_liked' => $userLiked,
+			'author' => $author,
+			'date' => $date
 		]);
 		exit();
 	}
@@ -87,6 +97,11 @@ class HomeController {
 	public function toggleLike() {
 		Auth::requireLogin();
 		$input = json_decode(file_get_contents('php://input'), true);
+
+		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
+			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
+			exit();
+		}
 		$filename = $input['filename'];
 		
 		$user = new Users();
@@ -118,6 +133,12 @@ class HomeController {
 	public function addComment() {
 		Auth::requireLogin();
 		$input = json_decode(file_get_contents('php://input'), true);
+
+		if (!isset($input['csrf_token']) || !Session::validateCsrfToken($input['csrf_token'])) {
+			echo json_encode(['status' => 'error', 'message' => 'CSRF Token invalid']);
+			exit();
+		}
+
 		$filename = $input['filename'];
 		$content = htmlspecialchars($input['content']); // Sécurité de base
 		
@@ -137,6 +158,35 @@ class HomeController {
 
 		header('Content-Type: application/json');
 		echo json_encode(['status' => 'success']);
+
+		$reqOwner = $db->prepare("
+			SELECT users.id AS owner_id, users.email, users.email_notifications 
+			FROM images 
+			INNER JOIN users ON images.user_id = users.id 
+			WHERE images.filename = :filename
+		");
+		$reqOwner->execute([':filename' => $filename]);
+		$ownerData = $reqOwner->fetch(PDO::FETCH_ASSOC);
+
+		if ($ownerData) {
+
+			if ($ownerData['email_notifications'] == 1 && $ownerData['owner_id'] != $_SESSION['user_id']) {
+				
+				$to = $ownerData['email'];
+				$subject = "Camagru - You just received a new comment !";
+
+				$message = "Hello,\n\n";
+				$message .= "A user just left a comment on your post.\n";
+				$message .= "Go on Camagru to see it!\n\n";
+				$message .= "Team Camagru.";
+				
+				$headers = "From: no-reply@camagru.com\r\n";
+				$headers .= "Reply-To: no-reply@camagru.com\r\n";
+				$headers .= "X-Mailer: PHP/" . phpversion();
+
+				mail($to, $subject, $message, $headers);
+			}
+		}
 		exit();
 	}
 }

@@ -112,14 +112,14 @@ class Users {
 	}
 
 	public function updatePasswordWithToken($token, $hashedPassword) {
-		$request = 'UPDATE users SET password = :hashedPassword, reset_token_expires_at = NULL, reset_token = :token';
+		$request = 'UPDATE users SET password = :hashedPassword, reset_token_expires_at = NULL, reset_token = NULL WHERE reset_token = :token';
 
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':hashedPassword' => $hashedPassword, ':token' => $token]);
 	}
 
 	public function getUserByEmail($email) {
-		$request = 'SELECT id, password FROM users WHERE email = :email';
+		$request = 'SELECT id, password, confirmed FROM users WHERE email = :email';
 
 		$statement = $this->pdoConnection->prepare($request);
 		$statement->execute([':email' => $email]);

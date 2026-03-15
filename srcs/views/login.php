@@ -5,11 +5,15 @@
 		<p class="subtitle">Welcome back.</p>
 
 		<form action="/login" method="POST">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 
 			<div class="form-group">
 				<label for="email-input">Email</label>
 				<?php if (isset($tab['invalid-email'])): ?>
 					<span class="form-error"><?= $tab['invalid-email'] ?></span>
+				<?php endif; ?>
+				<?php if (isset($tab['not-confirmed'])): ?>
+					<span class="form-error"><?= $tab['not-confirmed'] ?></span>
 				<?php endif; ?>
 				<input
 					type="email"
@@ -47,6 +51,7 @@
 			</summary>
 			
 			<form action="/forgot-password" method="POST" style="text-align: left; margin-top: 1rem;">
+				<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 				<div class="form-group">
 					<label for="forgot-email">Email address</label>
 					<input type="email" id="forgot-email" name="email" placeholder="you@example.com" required />

@@ -8,6 +8,7 @@
 			</div>
 
 			<form action="/studio/capture" method="POST" enctype="multipart/form-data" id="mainCaptureForm" class="app-sticker-form">
+				<input type="hidden" name="csrf_token" id="csrf_token" value="<?= htmlspecialchars(Session::generateCsrfToken()) ?>">
 				
 				<input type="hidden" name="image_data" id="image_data">
 				<input type="hidden" name="stickers_data" id="stickers_data">
@@ -156,11 +157,6 @@
 	const shareButton = document.getElementById('btn-share');
 	const deleteButton = document.getElementById('btn-delete');
 
-	publishButton.addEventListener('click', function() {
-		if (!currentEditingImage)
-			return ;
-	});
-
 	shareButton.addEventListener('click', function() {
 		if (!currentEditingImage)
 			return ;
@@ -198,7 +194,10 @@
 			fetch('/studio/publish', {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ filename: currentEditingImage })
+				body: JSON.stringify({ 
+					filename: currentEditingImage,
+					csrf_token: document.getElementById('csrf_token').value // LIGNE À AJOUTER
+				})
 			})
 			.then(response => response.json())
 			.then (data => {
@@ -224,7 +223,10 @@
 			fetch('/studio/delete', {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ filename: currentEditingImage })
+				body: JSON.stringify({ 
+					filename: currentEditingImage,
+					csrf_token: document.getElementById('csrf_token').value // LIGNE À AJOUTER
+				})
 			})
 			.then(response => {
 				if (!response.ok) throw new Error("Network error");
@@ -255,6 +257,12 @@
 
 	buttonClose.addEventListener('click', function() {
 		galleryModal.close(); // On ferme le <dialog>
+	});
+
+	galleryModal.addEventListener('click', function(event) {
+		if (event.target === galleryModal) {
+			galleryModal.close();
+		}
 	});
 
 
@@ -305,16 +313,21 @@
 	upload.addEventListener('change', function() {
 		if (this.files[0]) {
 			const reader = new FileReader();
-			reader.readAsDataURL(this.files[0]);
 			reader.onload = () => {
 				
 				uploadedImage.src = reader.result;
 
-				// pour éviter de garder le bouton de la caméra allumé
-				video.srcObject.getTracks().forEach(track => track.stop());
+				if (video.srcObject) {
+					video.srcObject.getTracks().forEach(track => track.stop());
+
+				}
+
 				video.style.display = 'none';
 				uploadedImage.style.display = 'block';
 			}
+			
+			reader.readAsDataURL(this.files[0]);
+
 		}
 	})
 
