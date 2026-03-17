@@ -108,6 +108,8 @@
 	</div>
 </dialog>
 
+<script defer src="/vendor/face-api/face-api.min.js"></script>
+<script defer src="/js/studio.js"></script>
 <script>
 
 	const video = document.getElementById('video');
