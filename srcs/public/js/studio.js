@@ -1,14 +1,10 @@
 const MODEL_URI = "/vendor/face-api/models";
-
 const videoElement = document.getElementById('video');
 const videoContainer = document.querySelector('.canvas-placeholder');
-
-// 1. Déclaration de l'image du filtre
 const activeFilterImage = new Image();
-// Vérifiez bien ce nom. Si votre fichier s'appelle dog.png, modifiez cette ligne.
-activeFilterImage.src = '/stickers/dog_ears.png'; 
+activeFilterImage.src = '/stickers/dog_ears.png';
+let isTracking = false;
 
-// 2. Chargement des modèles
 Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URI),
     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URI)
@@ -18,10 +14,10 @@ Promise.all([
     console.error("Erreur de chargement :", err);
 });
 
-// 3. Démarrage de la vidéo
 videoElement.addEventListener("playing", () => {
-    
-    // On force les dimensions de la vidéo pour l'IA
+    if (isTracking) return;
+    isTracking = true;
+
     videoElement.width = videoElement.videoWidth;
     videoElement.height = videoElement.videoHeight;
 
@@ -31,53 +27,65 @@ videoElement.addEventListener("playing", () => {
     canvas.style.left = '0';
     canvas.style.zIndex = '10';
     canvas.style.pointerEvents = 'none';
-
     videoContainer.appendChild(canvas);
 
-    // 4. La boucle classique qui fonctionnait chez vous
-    setInterval(async () => {
-        const displaySize = { 
-            width: videoElement.clientWidth, 
-            height: videoElement.clientHeight 
-        };
-        faceapi.matchDimensions(canvas, displaySize);
+    const offscreenCanvas = document.createElement('canvas');
+
+    const detectorOptions = new faceapi.TinyFaceDetectorOptions({
+        inputSize: 320,
+        scoreThreshold: 0.3
+    });
+
+
+    const displaySize = {
+        width: videoElement.clientWidth,
+        height: videoElement.clientHeight
+    };
+    faceapi.matchDimensions(canvas, displaySize);
+    offscreenCanvas.width = displaySize.width;
+    offscreenCanvas.height = displaySize.height;
+
+    async function detectAndDraw() {
+        if (videoElement.paused || videoElement.ended) {
+            isTracking = false;
+            return;
+        }
 
         try {
-            // Détection simple
             const detections = await faceapi
-                .detectAllFaces(videoElement, new faceapi.TinyFaceDetectorOptions())
+                .detectAllFaces(videoElement, detectorOptions)
                 .withFaceLandmarks();
 
-            const context = canvas.getContext("2d");
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            const offCtx = offscreenCanvas.getContext("2d");
+            offCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
             if (detections && detections.length > 0) {
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                
-                // Pour chaque visage détecté
+
                 resizedDetections.forEach(detection => {
                     const box = detection.detection.box;
-                    
-                    // Calcul de la taille et de la position
-                    const filterWidth = box.width * 1.6; 
+                    const filterWidth = box.width * 1.6;
                     const ratio = activeFilterImage.naturalHeight / activeFilterImage.naturalWidth;
                     const filterHeight = filterWidth * ratio;
-
                     const x = box.x - (filterWidth - box.width) / 2;
                     const y = box.y - (filterHeight * 0.45);
 
-                    // SÉCURITÉ : On vérifie que l'image existe bien avant de dessiner
                     if (activeFilterImage.complete && activeFilterImage.naturalWidth > 0) {
-                        context.drawImage(activeFilterImage, x, y, filterWidth, filterHeight);
-                    } else {
-                        // Si l'image est introuvable, on dessine le carré vert pour alerter
-                        faceapi.draw.drawDetections(canvas, [detection]);
-                        console.warn("Impossible de charger l'image du filtre. Vérifiez le chemin.");
+                        offCtx.drawImage(activeFilterImage, x, y, filterWidth, filterHeight);
                     }
                 });
             }
+
+            const visibleCtx = canvas.getContext("2d");
+            visibleCtx.clearRect(0, 0, canvas.width, canvas.height);
+            visibleCtx.drawImage(offscreenCanvas, 0, 0);
+
         } catch (e) {
             console.error("Erreur :", e);
         }
-    }, 100);
+
+        setTimeout(detectAndDraw, 50);
+    }
+
+    detectAndDraw();
 });
